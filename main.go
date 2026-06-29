@@ -11,7 +11,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
-//go:embed db/init.sql e Dockerfile já aplicar o schema.
+// Diretiva do compilador Go: incorpora db/init.sql copiado no Dockerfile no binário final. Isso permite que o SQL seja embutido no executável.
+//go:embed db/init.sql
 var initSQL string
 
 // App struct (para injeção de dependência)
