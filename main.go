@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	_ "embed"
 	"log"
 	"net/http"
 	"os"
@@ -10,10 +9,6 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/joho/godotenv"
 )
-
-// Diretiva do compilador Go: incorpora db/init.sql copiado no Dockerfile no binário final. Isso permite que o SQL seja embutido no executável.
-//go:embed db/init.sql
-var initSQL string
 
 // App struct (para injeção de dependência)
 type App struct {
@@ -47,11 +42,6 @@ func main() {
 		log.Fatalf("Não foi possível conectar ao banco de dados: %v", err)
 	}
 	defer db.Close()
-
-	if _, err := db.Exec(initSQL); err != nil {
-		log.Fatalf("Falha ao aplicar schema: %v", err)
-	}
-	log.Println("Schema aplicado.")
 
 	app := &App{
 		DB:         db,
