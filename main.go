@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	_ "embed"
 	"log"
 	"net/http"
 	"os"
@@ -9,6 +10,9 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/joho/godotenv"
 )
+
+//go:embed db/init.sql e Dockerfile já aplicar o schema.
+var initSQL string
 
 // App struct (para injeção de dependência)
 type App struct {
@@ -42,6 +46,11 @@ func main() {
 		log.Fatalf("Não foi possível conectar ao banco de dados: %v", err)
 	}
 	defer db.Close()
+
+	if _, err := db.Exec(initSQL); err != nil {
+		log.Fatalf("Falha ao aplicar schema: %v", err)
+	}
+	log.Println("Schema aplicado.")
 
 	app := &App{
 		DB:         db,
