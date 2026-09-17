@@ -1,0 +1,34 @@
+# Destino: alansenairj/auth-service -> .github/workflows/ci.yml
+#
+# Polyrepo: o repositorio E o servico, entao nao ha filtro de paths.
+# Os reutilizaveis vivem no repositorio GitOps e sao referenciados com @main.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: alansenairj/togglemaster-gitops/.github/workflows/ci-go.yml@main
+
+  cd:
+    needs: ci
+    permissions:
+      contents: read
+      id-token: write
+    uses: alansenairj/togglemaster-gitops/.github/workflows/cd-container.yml@main
+    with:
+      service: auth-service
+      ecr_repository: togglemaster/auth-service
+      gitops_path: apps/auth
+    secrets:
+      GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
