@@ -84,7 +84,9 @@ func main() {
 // connectDB inicializa e testa a conexão com o PostgreSQL
 func connectDB(databaseURL string) (*sql.DB, error) {
 	db, err := otelsql.Open("pgx", databaseURL,
-		otelsql.WithAttributes(semconv.DBSystemPostgreSQL))
+		otelsql.WithAttributes(semconv.DBSystemPostgreSQL),
+		// Um span por consulta: sem os spans internos do driver (ruido no Tempo).
+		otelsql.WithSpanOptions(otelsql.SpanOptions{OmitConnResetSession: true, OmitConnPrepare: true, OmitRows: true}))
 	if err != nil {
 		return nil, err
 	}
