@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -44,7 +44,7 @@ func (a *App) validateKeyHandler(w http.ResponseWriter, r *http.Request) {
 	err := a.DB.QueryRow("SELECT id FROM api_keys WHERE key_hash = $1 AND is_active = true", keyHash).Scan(&id)
 	if err != nil {
 		// Se não encontrar (sql.ErrNoRows), ou qualquer outro erro, a chave é inválida
-		log.Printf("Falha na validação da chave (hash: %s...): %v", keyHash[:6], err)
+		slog.WarnContext(r.Context(), "falha na validação da chave", "key_hash_prefix", keyHash[:6], "error", err)
 		http.Error(w, "Chave de API inválida ou inativa", http.StatusUnauthorized)
 		return
 	}
@@ -88,12 +88,12 @@ func (a *App) createKeyHandler(w http.ResponseWriter, r *http.Request) {
 	).Scan(&newID)
 
 	if err != nil {
-		log.Printf("Erro ao salvar a chave no banco: %v", err)
+		slog.ErrorContext(r.Context(), "erro ao salvar a chave no banco", "error", err)
 		http.Error(w, "Erro ao salvar a chave", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("Nova chave criada com sucesso (ID: %d, Name: %s)", newID, req.Name)
+	slog.InfoContext(r.Context(), "nova chave criada", "id", newID, "name", req.Name)
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(CreateKeyResponse{
 		Name:    req.Name,
