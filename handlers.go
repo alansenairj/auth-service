@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/subtle"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -33,6 +34,14 @@ func (a *App) validateKeyHandler(w http.ResponseWriter, r *http.Request) {
 
 	if keyString == "" {
 		http.Error(w, "Authorization header não encontrado", http.StatusUnauthorized)
+		return
+	}
+
+	// A MASTER_KEY também vale como chave de serviço: o Terraform entrega o mesmo
+	// valor ao evaluation-service (SERVICE_API_KEY), que nunca passa por api_keys.
+	if a.MasterKey != "" && subtle.ConstantTimeCompare([]byte(keyString), []byte(a.MasterKey)) == 1 {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Chave válida"})
 		return
 	}
 
